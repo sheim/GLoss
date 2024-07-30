@@ -1,25 +1,24 @@
 # iterative_learning.py
 import torch
-
-# import torch.nn as nn
+import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
 
 # Define sizes
-input_size = 8
-hidden_size = 32
-output_size = 8
-train_size = 128
-test_size = 8
+input_size = 2
+output_size = 2
+hidden_size = 8
+train_size = 10
+test_size = 5
 
 
 # Simple neural network
-class SimpleNN(torch.nn.Module):
-    def __init__(self, input_size, output_size):
+class SimpleNN(nn.Module):
+    def __init__(self, input_size, output_size, hidden_size=4):
         super(SimpleNN, self).__init__()
-        self.fc1 = torch.nn.Linear(input_size, hidden_size)
-        self.fc2 = torch.nn.Tanh()
-        self.fc3 = torch.nn.Linear(hidden_size, output_size)
+        self.fc1 = nn.Linear(input_size, hidden_size)
+        self.fc2 = nn.Tanh()
+        self.fc3 = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
         x = self.fc1(x)
@@ -28,14 +27,14 @@ class SimpleNN(torch.nn.Module):
 
 
 # Generate synthetic data with random distribution
-torch.manual_seed(-1)
+torch.manual_seed(42)
 all_data = torch.randn(train_size + test_size, input_size)
 all_target = torch.randn(train_size + test_size, output_size)
 
 # Sort data
-# sorted_indices = torch.argsort(all_data[:, 0])  # Sort based on the first column
-# all_data = all_data[sorted_indices]
-# all_target = all_target[sorted_indices]
+sorted_indices = torch.argsort(all_data[:, 0])  # Sort based on the first column
+all_data = all_data[sorted_indices]
+all_target = all_target[sorted_indices]
 
 # Split data into training and test sets
 train_data = all_data[:train_size]
@@ -44,16 +43,16 @@ test_data = all_data[train_size:]
 test_target = all_target[train_size:]
 
 # Shuffle training data
-# shuffle_indices = torch.randperm(train_size)
-# train_data = train_data[shuffle_indices]
-# train_target = train_target[shuffle_indices]
+shuffle_indices = torch.randperm(train_size)
+train_data = train_data[shuffle_indices]
+train_target = train_target[shuffle_indices]
 
 # Instantiate the network
-model = SimpleNN(input_size, output_size)
+model = SimpleNN(input_size, output_size, hidden_size=hidden_size)
 
 # Loss functions
-criterion1 = torch.nn.MSELoss()
-criterion2 = torch.nn.L1Loss()
+criterion1 = nn.MSELoss()
+criterion2 = nn.L1Loss()
 
 # Optimizer
 optimizer = optim.SGD(model.parameters(), lr=0.01)

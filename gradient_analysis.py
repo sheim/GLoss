@@ -1,8 +1,8 @@
 # gradient_analysis.py
 import torch
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
+import seaborn as sns
 
 
 # Function to compare gradients
@@ -16,8 +16,11 @@ def compare_gradients(grads1, grads2):
         torch.nn.functional.cosine_similarity(g1.view(1, -1), g2.view(1, -1)).item()
         for g1, g2 in zip(grads1, grads2)
     ]
+    angles = [
+        np.arccos(np.clip(cos_sim, -1, 1)) for cos_sim in cosine_similarities
+    ]  # Calculate angles in radians
 
-    return magnitudes1, magnitudes2, dot_products, cosine_similarities
+    return magnitudes1, magnitudes2, dot_products, cosine_similarities, angles
 
 
 # Load gradient data from file
@@ -28,6 +31,7 @@ all_magnitudes1 = []
 all_magnitudes2 = []
 all_dot_products = []
 all_cosine_similarities = []
+all_angles = []
 
 # Analyze gradients
 for i, data in enumerate(gradient_data):
@@ -35,20 +39,22 @@ for i, data in enumerate(gradient_data):
     grads_loss1 = data["grads_loss1"]
     grads_loss2 = data["grads_loss2"]
 
-    magnitudes1, magnitudes2, dot_products, cosine_similarities = compare_gradients(
-        grads_loss1, grads_loss2
+    magnitudes1, magnitudes2, dot_products, cosine_similarities, angles = (
+        compare_gradients(grads_loss1, grads_loss2)
     )
 
     all_magnitudes1.append(magnitudes1)
     all_magnitudes2.append(magnitudes2)
     all_dot_products.append(dot_products)
     all_cosine_similarities.append(cosine_similarities)
+    all_angles.append(angles)
 
 # Convert lists to numpy arrays for easier plotting
 all_magnitudes1 = np.array(all_magnitudes1)
 all_magnitudes2 = np.array(all_magnitudes2)
 all_dot_products = np.array(all_dot_products)
 all_cosine_similarities = np.array(all_cosine_similarities)
+all_angles = np.array(all_angles)
 
 # Plotting
 iterations = range(len(gradient_data))
@@ -120,3 +126,12 @@ plt.title(
     f"Heatmap of Dot Products and Cosine Similarities (Iteration {iteration_to_visualize})"
 )
 plt.show()
+
+# Polar Plot for Angles
+fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(polar=True))
+
+angles_plot = np.linspace(0, 2 * np.pi, len(layers), endpoint=False).tolist()
+angles_plot += angles_plot[:1]  # Complete the loop
+
+for i, iteration_angles in enumerate(all_angles):
+    values = iteration_angles.tolist()
